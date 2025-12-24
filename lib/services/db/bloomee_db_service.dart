@@ -5,6 +5,7 @@ import 'package:Bloomee/model/MediaPlaylistModel.dart';
 import 'package:Bloomee/model/album_onl_model.dart';
 import 'package:Bloomee/model/artist_onl_model.dart';
 import 'package:Bloomee/model/chart_model.dart';
+import 'package:Bloomee/model/dashboard_models.dart';
 import 'package:Bloomee/model/lyrics_models.dart';
 import 'package:Bloomee/model/playlist_onl_model.dart';
 import 'package:Bloomee/model/songModel.dart';
@@ -183,7 +184,7 @@ class BloomeeDBService {
               'v${packageInfo.version}+${int.parse(packageInfo.buildNumber) % 1000}',
           "created_at": DateTime.now().toIso8601String(),
           "note":
-              "This file is an automatically generated full backup of Bloomee. It includes playlists, search history, settings, and other app data. Manual modification is strongly discouraged and may cause data corruption. For help, visit: https://github.com/HemantKArya/BloomeeTunes."
+              "This file is an automatically generated full backup of Earphoria. It includes playlists, search history, settings, and other app data. Manual modification is strongly discouraged and may cause data corruption. For help, visit: https://github.com/hajul-dhanish/Earphoria."
         },
         "b_settings": bSettings.map((e) => e.toJson()).toList(),
         "s_settings": sSettings.map((e) => e.toJson()).toList(),
@@ -1541,6 +1542,193 @@ class BloomeeDBService {
     }
 
     return results;
+  }
+
+  // ============================================================================
+  // Dashboard Statistics Methods
+  // ============================================================================
+
+  /// Get overall listening statistics for the user
+  static Future<ListeningStats> getListeningStats() async {
+    Isar isarDB = await db;
+
+    // Get total play count from recently played
+    final totalPlayCount = isarDB.recentlyPlayedDBs.countSync();
+
+    // Calculate total listening time (estimate: 3.5 minutes per song average)
+    final totalListeningTime =
+        Duration(minutes: (totalPlayCount * 3.5).round());
+
+    // Get favorite songs count
+    final favoriteSongsCount = isarDB.mediaPlaylistDBs
+            .getSync(MediaPlaylistDB(playlistName: "Liked").isarId)
+            ?.mediaItems
+            .length ??
+        0;
+
+    // Get downloaded songs count
+    final downloadedSongsCount = isarDB.downloadDBs.countSync();
+
+    // Get playlists count (excluding standard playlists)
+    final allPlaylists = isarDB.mediaPlaylistDBs.where().findAllSync();
+    final playlistsCount = allPlaylists
+        .where((p) => !standardPlaylists.contains(p.playlistName))
+        .length;
+
+    return ListeningStats(
+      totalPlayCount: totalPlayCount,
+      totalListeningTime: totalListeningTime,
+      favoriteSongsCount: favoriteSongsCount,
+      downloadedSongsCount: downloadedSongsCount,
+      playlistsCount: playlistsCount,
+    );
+  }
+
+  /// Get top songs based on play count
+  static Future<List<TopContentItem>> getTopSongs({
+    int limit = 10,
+    DateTime? since,
+  }) async {
+    Isar isarDB = await db;
+
+    // Get recently played items
+    List<RecentlyPlayedDB> recentlyPlayed;
+    if (since != null) {
+      recentlyPlayed = isarDB.recentlyPlayedDBs
+          .filter()
+          .lastPlayedGreaterThan(since)
+          .sortByLastPlayedDesc()
+          .findAllSync();
+    } else {
+      recentlyPlayed =
+          isarDB.recentlyPlayedDBs.where().sortByLastPlayedDesc().findAllSync();
+    }
+
+    // Count play frequency for each song
+    Map<String, int> songPlayCounts = {};
+    Map<String, MediaItemDB> songItems = {};
+
+    for (var item in recentlyPlayed) {
+      await item.mediaItem.load();
+      if (item.mediaItem.value != null) {
+        final mediaItem = item.mediaItem.value!;
+        final key = mediaItem.mediaID;
+        songPlayCounts[key] = (songPlayCounts[key] ?? 0) + 1;
+        songItems[key] = mediaItem;
+      }
+    }
+
+    // Sort by play count and take top N
+    final sortedSongs = songPlayCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final topSongs = sortedSongs.take(limit).map((entry) {
+      final mediaItem = songItems[entry.key]!;
+      return TopContentItem(
+        id: mediaItem.mediaID,
+        title: mediaItem.title,
+        subtitle: mediaItem.artist,
+        imageUrl: mediaItem.artURL,
+        playCount: entry.value,
+        mediaItem: MediaItemDB2MediaItem(mediaItem),
+      );
+    }).toList();
+
+    return topSongs;
+  }
+
+  /// Get top artists based on play count
+  static Future<List<TopContentItem>> getTopArtists({
+    int limit = 10,
+    DateTime? since,
+  }) async {
+    Isar isarDB = await db;
+
+    // Get recently played items
+    List<RecentlyPlayedDB> recentlyPlayed;
+    if (since != null) {
+      recentlyPlayed = isarDB.recentlyPlayedDBs
+          .filter()
+          .lastPlayedGreaterThan(since)
+          .sortByLastPlayedDesc()
+          .findAllSync();
+    } else {
+      recentlyPlayed =
+          isarDB.recentlyPlayedDBs.where().sortByLastPlayedDesc().findAllSync();
+    }
+
+    // Count play frequency for each artist
+    Map<String, int> artistPlayCounts = {};
+    Map<String, String> artistImages = {};
+
+    for (var item in recentlyPlayed) {
+      await item.mediaItem.load();
+      if (item.mediaItem.value != null) {
+        final mediaItem = item.mediaItem.value!;
+        final artist = mediaItem.artist;
+        artistPlayCounts[artist] = (artistPlayCounts[artist] ?? 0) + 1;
+        artistImages[artist] = mediaItem.artURL;
+      }
+    }
+
+    // Sort by play count and take top N
+    final sortedArtists = artistPlayCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final topArtists = sortedArtists.take(limit).map((entry) {
+      return TopContentItem(
+        id: entry.key,
+        title: entry.key,
+        subtitle: '${entry.value} plays',
+        imageUrl: artistImages[entry.key],
+        playCount: entry.value,
+      );
+    }).toList();
+
+    return topArtists;
+  }
+
+  /// Get listening trends over the specified number of days
+  static Future<List<ListeningTrend>> getListeningTrends({
+    int days = 7,
+  }) async {
+    Isar isarDB = await db;
+
+    final now = DateTime.now();
+    final startDate = now.subtract(Duration(days: days));
+
+    // Get recently played items within the time range
+    final recentlyPlayed = isarDB.recentlyPlayedDBs
+        .filter()
+        .lastPlayedGreaterThan(startDate)
+        .sortByLastPlayedDesc()
+        .findAllSync();
+
+    // Group by date
+    Map<String, int> dailyPlayCounts = {};
+
+    for (var item in recentlyPlayed) {
+      final dateKey =
+          '${item.lastPlayed.year}-${item.lastPlayed.month.toString().padLeft(2, '0')}-${item.lastPlayed.day.toString().padLeft(2, '0')}';
+      dailyPlayCounts[dateKey] = (dailyPlayCounts[dateKey] ?? 0) + 1;
+    }
+
+    // Create trend items for each day
+    List<ListeningTrend> trends = [];
+    for (int i = 0; i < days; i++) {
+      final date = now.subtract(Duration(days: days - i - 1));
+      final dateKey =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final playCount = dailyPlayCounts[dateKey] ?? 0;
+
+      trends.add(ListeningTrend(
+        date: date,
+        playCount: playCount,
+        listeningTime: Duration(minutes: (playCount * 3.5).round()),
+      ));
+    }
+
+    return trends;
   }
 }
 

@@ -18,7 +18,7 @@ import 'package:Bloomee/screens/widgets/snackbar.dart';
 import 'package:Bloomee/services/db/bloomee_db_service.dart';
 import 'package:Bloomee/services/keyboard_shortcuts_service.dart';
 import 'package:Bloomee/services/shortcut_indicator_service.dart';
-import 'package:Bloomee/theme_data/default.dart';
+import 'package:Bloomee/theme_data/material3_theme.dart';
 import 'package:Bloomee/services/import_export_service.dart';
 import 'package:Bloomee/utils/external_list_importer.dart';
 import 'package:Bloomee/utils/ticker.dart';
@@ -296,7 +296,7 @@ class _MyAppState extends State<MyApp> {
                   ),
                   scaffoldMessengerKey: SnackbarService.messengerKey,
                   routerConfig: GlobalRoutes.globalRouter,
-                  theme: Default_Theme().defaultThemeData,
+                  theme: Material3Theme.darkTheme(),
                   scrollBehavior: CustomScrollBehavior(),
                   debugShowCheckedModeBanner: false,
                 ),

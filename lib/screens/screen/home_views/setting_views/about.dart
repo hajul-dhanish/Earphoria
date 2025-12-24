@@ -124,7 +124,7 @@ class About extends StatelessWidget {
                       spacing: 6,
                       children: [
                         Text(
-                          'BloomeeTunes',
+                          'Earphoria',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -140,7 +140,8 @@ class About extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Crafting symphonies in code.',
+                'If buying isn\'t owning, then pirating isn\'t stealing',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 16,
                     color: kSecondaryTextColor,
@@ -175,7 +176,7 @@ class About extends StatelessWidget {
                     const SizedBox(width: 12),
                     Flexible(
                       child: Text(
-                        '@iamhemantindia',
+                        '@hajul-dhanish',
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: kPrimaryTextColor,
@@ -187,7 +188,7 @@ class About extends StatelessWidget {
                               color: const Color.fromARGB(255, 255, 246, 238)
                                   .withValues(alpha: 0.4),
                               blurRadius: 12,
-                              offset: Offset(0, 0),
+                              offset: const Offset(0, 0),
                             ),
                           ],
                         ),
@@ -211,7 +212,7 @@ class About extends StatelessWidget {
                       text: 'Maintainer',
                       tooltip: 'Follow him on GitHub',
                       onTap: () {
-                        launchUrl(Uri.parse('https://github.com/HemantKArya'),
+                        launchUrl(Uri.parse('https://github.com/hajul-dhanish'),
                             mode: LaunchMode.externalApplication);
                       }),
                   // Short label 'Email' opens mail composer
@@ -221,17 +222,17 @@ class About extends StatelessWidget {
                       tooltip: 'Send a business inquiry',
                       onTap: () {
                         launchUrl(
-                          Uri.parse('https://x.com/iamhemantindia'),
+                          Uri.parse('https://x.com/hajuldhanish'),
                         );
                       }),
                   // Short label 'Linkedin' opens Linkedin profile
                   _InfoPill(
                       icon: FontAwesome.linkedin_brand,
-                      text: 'Linkedin',
-                      tooltip: 'Updates and creative highlights',
+                      text: 'LinkedIn',
+                      tooltip: 'Professional profile',
                       onTap: () {
                         launchUrl(
-                            Uri.parse('https://linkedin.com/in/iamhemantindia'),
+                            Uri.parse('https://linkedin.com/in/haja-mohdn'),
                             mode: LaunchMode.externalApplication);
                       }),
                 ],
@@ -244,79 +245,33 @@ class About extends StatelessWidget {
   }
 
   Widget _buildSupportSection() {
-    return Column(
+    return const Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(horizontal: 12.0),
-          child: Text(
-            '"Enjoying Bloomee? A small tip keeps it blooming." 🌸',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                color: kSecondaryTextColor, fontSize: 14, fontFamily: 'Gilroy'),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            gradient: kButtonGradient,
-            // slightly larger radius for a more prominent pill
-            borderRadius: BorderRadius.circular(34.0),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFDE6262).withValues(alpha: 0.5),
-                blurRadius: 25,
-                offset: const Offset(0, 8),
+          child: Column(
+            children: [
+              Text(
+                "Forked from BloomeeTunes by @iamhemantindia",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: kSecondaryTextColor,
+                    fontSize: 12,
+                    fontFamily: 'Gilroy',
+                    fontStyle: FontStyle.italic),
+              ),
+              SizedBox(height: 4),
+              Text(
+                "All credits to the original creator",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: kSecondaryTextColor,
+                    fontSize: 11,
+                    fontFamily: 'Gilroy'),
               ),
             ],
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              // increase the ink response radius to match the larger pill
-              borderRadius: BorderRadius.circular(32.0),
-              onTap: () {
-                launchUrl(
-                  Uri.parse("https://hemantkarya.github.io/BloomeeTunes/"),
-                  mode: LaunchMode.externalApplication,
-                );
-              },
-              child: Container(
-                // increased padding for a larger touch target
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 44, vertical: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(32.0),
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(Icons.favorite, color: kPrimaryTextColor, size: 20),
-                    SizedBox(width: 10),
-                    Text(
-                      "I'll help",
-                      style: TextStyle(
-                        color: kPrimaryTextColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Gilroy',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          'I want Bloomee to keep improving.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-              color: kSecondaryTextColor, fontSize: 14, fontFamily: 'Gilroy'),
         ),
       ],
     );
@@ -333,7 +288,7 @@ class About extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               onTap: () {
                 launchUrl(
-                    Uri.parse("https://hemantkarya.github.io/BloomeeTunes/"),
+                    Uri.parse("https://github.com/hajul-dhanish/Earphoria"),
                     mode: LaunchMode.externalApplication);
               },
               child: const Row(

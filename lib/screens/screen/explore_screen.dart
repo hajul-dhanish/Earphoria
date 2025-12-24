@@ -8,6 +8,8 @@ import 'package:Bloomee/blocs/settings_cubit/cubit/settings_cubit.dart';
 import 'package:Bloomee/model/MediaPlaylistModel.dart';
 import 'package:Bloomee/screens/screen/home_views/recents_view.dart';
 import 'package:Bloomee/screens/screen/home_views/setting_views/about.dart';
+import 'package:Bloomee/screens/widgets/horizontal_card_view.dart';
+import 'package:Bloomee/screens/screen/chart/carousel_widget.dart';
 import 'package:Bloomee/screens/widgets/more_bottom_sheet.dart';
 import 'package:Bloomee/screens/widgets/sign_board_widget.dart';
 import 'package:Bloomee/screens/widgets/song_tile.dart';
@@ -18,8 +20,6 @@ import 'package:Bloomee/screens/screen/home_views/timer_view.dart';
 import 'package:Bloomee/theme_data/default.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'chart/carousal_widget.dart';
-import '../widgets/horizontal_card_view.dart';
 import '../widgets/tabList_widget.dart';
 import 'package:badges/badges.dart' as badges;
 
@@ -90,7 +90,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 SliverList(
                   delegate: SliverChildListDelegate(
                     [
-                      CaraouselWidget(),
+                      const CarouselWidget(),
                       Padding(
                         padding: const EdgeInsets.only(top: 15.0),
                         child: SizedBox(

@@ -42,7 +42,7 @@ class CheckUpdateView extends StatelessWidget {
                       child: FilledButton(
                         onPressed: () {
                           launch_Url(Uri.parse(
-                              "https://github.com/HemantKArya/BloomeeTunes/releases"));
+                              "https://github.com/hajul-dhanish/Earphoria/releases"));
                         },
                         child: SizedBox(
                           // width: 150,

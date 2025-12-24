@@ -3,7 +3,6 @@ import 'package:Bloomee/screens/widgets/player_overlay_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:Bloomee/screens/widgets/mini_player_widget.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -199,38 +198,29 @@ class HorizontalNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GNav(
-      gap: 7.0,
-      tabBackgroundColor: Default_Theme.accentColor2.withValues(alpha: 0.22),
-      color: Default_Theme.primaryColor2,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      activeColor: Default_Theme.accentColor2,
-      textStyle: Default_Theme.secondoryTextStyleMedium.merge(
-          const TextStyle(color: Default_Theme.accentColor2, fontSize: 18)),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      backgroundColor: Default_Theme.themeColor.withValues(alpha: 0.3),
-      tabs: const [
-        GButton(
-          icon: MingCute.home_4_fill,
-          text: "Home",
-        ),
-        GButton(
-          icon: MingCute.book_5_fill,
-          text: "Library",
-        ),
-        GButton(
-          icon: MingCute.search_2_fill,
-          text: "Search",
-        ),
-        GButton(
-          icon: MingCute.folder_download_fill,
-          text: "Offline",
-        ),
-      ],
+    return NavigationBar(
       selectedIndex: navigationShell.currentIndex,
-      onTabChange: (value) {
+      onDestinationSelected: (value) {
         navigationShell.goBranch(value);
       },
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(MingCute.home_4_fill),
+          label: "Home",
+        ),
+        NavigationDestination(
+          icon: Icon(MingCute.book_5_fill),
+          label: "Library",
+        ),
+        NavigationDestination(
+          icon: Icon(MingCute.search_2_fill),
+          label: "Search",
+        ),
+        NavigationDestination(
+          icon: Icon(MingCute.folder_download_fill),
+          label: "Offline",
+        ),
+      ],
     );
   }
 }
