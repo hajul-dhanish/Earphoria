@@ -1,0 +1,151 @@
+name: "Flutter Release Build"
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    # Allow manual trigger for emergency releases
+
+jobs:
+  release:
+    name: Build & Release Flutter App
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3.12.0
+        with:
+          distribution: 'oracle'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.4'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Update Build Number in pubspec.yaml
+        shell: powershell
+        run: |
+          echo "📝 Updating build number in pubspec.yaml..."
+          $content = Get-Content pubspec.yaml -Raw
+          $vLine = Select-String -Path pubspec.yaml -Pattern '^version:\s*(\S+)' | Select-Object -First 1
+          if (-not $vLine) { Write-Error 'version not found in pubspec.yaml'; exit 1 }
+          
+          $currentVersion = $vLine.Matches[0].Groups[1].Value
+          $ver = $currentVersion.Split('+')[0]
+          $newVersion = "$ver+${{github.run_number}}"
+          
+          $content = $content -replace "version:\s*$currentVersion", "version: $newVersion"
+          Set-Content -Path pubspec.yaml -Value $content
+          
+          echo "VERSION=$ver" >> $env:GITHUB_ENV
+          echo "BUILD_NUMBER=${{github.run_number}}" >> $env:GITHUB_ENV
+          echo "✅ Updated version to: $newVersion"
+
+      - name: Create Keystore File
+        run: |
+          $b64 = "${{ secrets.KEY_STORE }}"
+          $filename = "./android/bloomee.jks"
+          $bytes = [Convert]::FromBase64String($b64)
+          [IO.File]::WriteAllBytes($filename, $bytes)
+          echo "✅ Keystore file created"
+
+      - name: Create Keystore Properties
+        run: |
+          echo keyPassword=\${{ secrets.KEY_PASSWORD }} > ./android/key.properties
+          echo storePassword=\${{ secrets.STORE_PASSWORD }} >> ./android/key.properties
+          echo keyAlias=\${{ secrets.KEY_ALIAS }} >> ./android/key.properties
+          echo "✅ Keystore properties configured"
+
+      - name: Build Android Release APK
+        run: |
+          echo "🔨 Building Android release APK..."
+          flutter build apk --release
+          echo "✅ Android build complete"
+
+      - name: Verify APK Signature
+        run: |
+          echo "🔍 Verifying APK signature..."
+          $buildToolsDir = Get-ChildItem "$env:ANDROID_HOME\build-tools" | Where-Object { $_.PSIsContainer } | Sort-Object Name -Descending | Select-Object -First 1
+          echo "Using build tools version: $($buildToolsDir.Name)"
+          
+          & "$($buildToolsDir.FullName)\apksigner.bat" verify build/app/outputs/flutter-apk/app-release.apk
+          echo "✅ APK verified successfully"
+
+      - name: Rename Android APK
+        shell: powershell
+        run: |
+          echo "📝 Renaming APK file..."
+          Rename-Item -Path "build/app/outputs/flutter-apk/app-release.apk" -NewName "bloomee_tunes_android_v$env:VERSION+$env:BUILD_NUMBER.apk"
+          echo "✅ APK renamed to: bloomee_tunes_android_v$env:VERSION+$env:BUILD_NUMBER.apk"
+
+      - name: Build Windows App
+        run: |
+          echo "🔨 Building Windows release..."
+          flutter build windows --release
+          echo "✅ Windows build complete"
+
+      - name: Create Build Number File
+        run: |
+          echo $env:BUILD_NUMBER > build-number.txt
+          echo "Build number: $env:BUILD_NUMBER"
+
+      - name: Rename Windows Executable
+        run: |
+          Rename-Item -Path "build/windows/x64/runner/Release/bloomee.exe" -NewName "Bloomee.exe"
+          echo "✅ Windows executable renamed"
+
+      - name: Package Windows Build
+        run: |
+          echo "📦 Creating Windows ZIP archive..."
+          Compress-Archive -Path build/windows/x64/runner/Release/* -Destination build/windows/x64/bloomee_tunes_windows_x64_v${{ env.VERSION }}+${{github.run_number}}.zip
+          echo "✅ Windows package created"
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Release-v${{ env.VERSION }}+${{ env.BUILD_NUMBER }}
+          path: |
+            build/app/outputs/flutter-apk/bloomee_tunes_android_v${{ env.VERSION }}+${{ env.BUILD_NUMBER }}.apk
+            build/windows/x64/bloomee_tunes_windows_x64_v${{ env.VERSION }}+${{ env.BUILD_NUMBER }}.zip
+            build-number.txt
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: |
+            build/app/outputs/flutter-apk/bloomee_tunes_android_v${{ env.VERSION }}+${{ env.BUILD_NUMBER }}.apk
+            build/windows/x64/bloomee_tunes_windows_x64_v${{ env.VERSION }}+${{ env.BUILD_NUMBER }}.zip
+            build-number.txt
+          tag: v${{ env.VERSION }}+${{ env.BUILD_NUMBER }}
+          name: Release v${{ env.VERSION }}+${{ env.BUILD_NUMBER }}
+          body: |
+            ## 🎉 BloomeeTunes Release v${{ env.VERSION }}
+            
+            **Build Number:** ${{ env.BUILD_NUMBER }}
+            **Release Date:** ${{ github.event.head_commit.timestamp }}
+            
+            ### 📦 Downloads
+            
+            #### Android
+            - **Release APK** - Universal APK that works on all Android devices
+            
+            #### Windows
+            - **Windows x64** - ZIP archive for Windows 10/11
+            
+            ### 📝 Changes
+            This release was automatically built from the latest merge to main branch.
+            
+            ---
+            *Automated release generated by GitHub Actions*
+          token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: true
+          draft: false
